@@ -1,5 +1,5 @@
 <template>
-  <div class="datapicker">
+  <fragment class="datapicker">
     <input
       v-model="internalValue"
       v-mask="'##.##.####'"
@@ -21,12 +21,13 @@
         @selected="chosenDate"
       ></calendar>
     </transition>
-  </div>
+  </fragment>
 </template>
 
 <script>
 import Calendar from './Calendar'
 import { mask } from 'vue-the-mask'
+import { ref, computed, watch } from "vue"
 
 export default {
   name: 'Datapicker',
@@ -37,82 +38,90 @@ export default {
 
   directives: { mask },
 
-  data () {
-    return {
-      isOpen: false,
-      internalValue: '',
-      showError: false,
-      closeWindow: false,
-      hover: false,
-      inputDay: '',
-      inputMonth: '',
-      inputYear: '',
-    }
-  },
+  setup () {
+    const isOpen = ref(false)
+    const internalValue = ref('')
+    const showError = ref(false)
+    const closeWindow = ref(false)
+    const hover = ref(false)
+    const inputDay = ref('')
+    const inputMonth = ref('')
+    const inputYear = ref('')
 
-  computed: {
-    svzDatapickerInput () {
+    const svzDatapickerInput = computed(() => {
       return [{
-        'datapicker__input--error': this.showError,
-        'datapicker__input--active': this.isOpen,
+        'datapicker__input--error': showError.value,
+        'datapicker__input--active': isOpen.value,
       }]
-    },
+    })
 
-    calendarStatus () {
+    const calendarStatus = computed(() => {
       return [{
-        'calendar--active': !this.internalValue.length && this.isOpen,
-        'calendar--hidden': this.internalValue.length,
-        'calendar--nonactive': !this.internalValue.length && !this.isOpen,
+        'calendar--active': !internalValue.value.length && isOpen.value,
+        'calendar--hidden': internalValue.value.length,
+        'calendar--nonactive': !internalValue.valuelength && !isOpen.value,
       }]
-    },
+    })
 
-    closeStatus () {
+    const closeStatus = computed(() => {
       return [{
-        'close--active': this.internalValue.length,
-        'close--hidden': !this.internalValue.length,
+        'close--active': internalValue.length,
+        'close--hidden': !internalValue.length,
       }]
-    },
-  },
+    })
 
-  watch: {
-    internalValue (value) {
-      this.internalValue = value
-      this.inputDay = this.internalValue.slice(0, 2)
-      this.inputMonth = this.internalValue.slice(3, 5)
-      this.inputYear = this.internalValue.slice(6, 10)
+    watch(() => {
+      inputDay.value = (internalValue.value).slice(0, 2)
+      inputMonth.value = (internalValue.value).slice(3, 5)
+      inputYear.value = (internalValue.value).slice(6, 10)
 
-      if (!this.internalValue.length) { this.showError = false }
-      (this.internalValue.length) ? this.isOpen = true : this.isOpen = false
+      if (!internalValue.value.length) { showError.value = false }
+      (internalValue.value.length) ? isOpen.value = true : isOpen.value = false
 
-      if (this.internalValue.length > 1) {
-        if (this.inputDay > 31) this.showError = true
-        if (this.inputDay === '00') this.showError = true
+      if (internalValue.length > 1) {
+        if (inputDay.value > 31) showError.value = true
+        if (inputDay.value === '00') showError.value = true
       }
 
-      if (this.internalValue.length > 4) {
-        if (this.inputMonth > 12 || this.inputMonth < 1) {
-          this.showError = true
-        } else if (this.inputMonth === '02' && this.inputDay > 29) {
-          this.showError = true
+      if (internalValue.value.length > 4) {
+        if (inputMonth > 12 || inputMonth < 1) {
+          showError.value = true
+        } else if (inputMonth === '02' && inputDay > 29) {
+          showError.value = true
         } else {
-          this.showError = false
+          showError.value = false
         }
       }
-    },
-  },
+    })
 
-  methods: {
-    closeCalendar () {
-      this.isOpen = false
-    },
+    function closeCalendar () {
+      isOpen.value = false
+    }
 
-    chosenDate (value) {
-      this.internalValue = value
-    },
+    function chosenDate (value) {
+      internalValue.value = value
+    }
 
-    clearInput () {
-      this.internalValue = ''
-    },
+    function clearInput () {
+      internalValue.value = ''
+    }
+
+    return {
+      isOpen,
+      internalValue,
+      showError,
+      closeWindow,
+      hover,
+      inputDay,
+      inputMonth,
+      inputYear,
+      svzDatapickerInput,
+      calendarStatus,
+      closeStatus,
+      closeCalendar,
+      chosenDate,
+      clearInput
+    }
   },
 }
 
@@ -139,7 +148,7 @@ $white: #FFFFFF;
     border-radius: 10px;
     font-size: 15px;
     text-align: center;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
     outline: none;
 
     &::placeholder {
@@ -185,6 +194,7 @@ $white: #FFFFFF;
     padding-top: 6px;
     padding-bottom: 6px;
     padding: 20px;
+    margin: 0 auto;
 
     &--active {
       fill: $gray;

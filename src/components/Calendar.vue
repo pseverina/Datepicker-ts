@@ -75,6 +75,7 @@
 </template>
 
 <script>
+import { ref, watch, onMounted } from "vue"
 
 export default {
   name: 'Calendar',
@@ -98,221 +99,244 @@ export default {
     },
   },
 
-  data () {
-    return {
-      internalValue: '',
-      days: [],
-      prevMonthDays: [],
-      nextMonthDays: [],
-      day: this.inputDay,
-      monthToString: '',
-      month: this.inputMonth,
-      monthNumber: '',
-      year: this.inputYear,
-      weekDays: [
-        'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс',
-      ],
-      monthName: [
-        'Январь',
-        'Февраль',
-        'Март',
-        'Апрель',
-        'Май',
-        'Июнь',
-        'Июль',
-        'Август',
-        'Сентябрь',
-        'Октябрь',
-        'Ноябрь',
-        'Декабрь',
-      ],
-      showError: false,
-      closeWindow: false,
-      chosenDay: false,
-      date: '',
-    }
-  },
+  setup(props) {
+    const internalValue = ref('')
+    const days = ref([])
+    const prevMonthDays = ref([])
+    const nextMonthDays = ref([])
+    const day = ref(props.inputDay)
+    const monthToString = ref('')
+    const month = ref(props.inputMonth)
+    const monthNumber = ref('')
+    const year = ref(props.inputYear)
+    const weekDays = [
+      'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс',
+    ]
+    const monthName = [
+      'Январь',
+      'Февраль',
+      'Март',
+      'Апрель',
+      'Май',
+      'Июнь',
+      'Июль',
+      'Август',
+      'Сентябрь',
+      'Октябрь',
+      'Ноябрь',
+      'Декабрь',
+    ]
+    const showError = ref(false)
+    const closeWindow = ref(false)
+    const chosenDay = ref(false)
+    const date = ref('')
 
-  watch: {
-    inputDay (val) {
-      this.day = val
-      this.genCalendar()
-    },
-    inputMonth (val) {
-      this.month = val
-      this.genCalendar()
-    },
-    inputYear (val) {
-      this.year = val
-      this.genCalendar()
-    },
-  },
+    watch(() => {
+      day.value = props.inputDay
+      month.value = props.inputMonth
+      year.value = props.inputYear
+      genCalendar()
+    })
 
-  created () {
-    this.genCalendar()
-  },
+    onMounted(() => {
+      genCalendar()
+    })
 
-  methods: {
-    genCalendar () {
-      this.days = []
-      this.date = new Date()
+    function genCalendar () {
+      const days = ref([])
+      date.value = new Date()
 
-      this.genMonth(this.month)
-      this.genYear(this.year)
-      const daysInMonth = new Date(this.year, this.month, 0).getDate()
+      genMonth(date.value.getMonth())
+      genYear(date.value.getFullYear())
+
+      const daysInMonth = new Date(year.value, month.value, 0).getDate()
       for (let eachDay = 1; eachDay < daysInMonth + 1; eachDay++) {
-        this.days.push(eachDay)
+        days.value.push(eachDay)
       }
-      this.genPreviousMonth()
-      this.genNextMonth()
-    },
 
-    genMonth (month) {
-      month = Number(month)
-      if (month === 0) {
-        this.month = this.date.getMonth() + 1
-        this.monthToString = this.monthName[this.month - 1]
+      genPreviousMonth()
+      genNextMonth()
+    }
+
+    function genMonth (value) {
+      month.value = Number(value)
+
+      if (month.value === 0) {
+        month.value = date.getMonth() + 1
+        monthToString.value = monthName[month.value- 1]
       } else {
-        this.month = month
-        this.monthToString = this.monthName[this.month - 1]
+        monthToString.value = monthName[month.value - 1]
       }
-    },
+    }
 
-    genYear (year) {
-      (year.length < 4) ? this.year = this.date.getFullYear() : this.year = year
-    },
+    function genYear (currentYear) {
+      (currentYear.length < 4) ? year.value = date.getFullYear() : year.value = currentYear
+    }
 
-    genPreviousMonth () {
-      this.prevMonthDays = []
+    function genPreviousMonth () {
+      const prevMonthDays = []
 
       // первый день недели месяца
-      const prevMonth = this.month - 1
-      const firstDay = new Date(this.year, prevMonth, 1)
-      let firstDayWeekday = firstDay.getDay()
-      if (firstDayWeekday !== 0) {
-        firstDayWeekday--
+      const prevMonth = month.value - 1
+      const firstDay = new Date(year.value, prevMonth, 1)
+
+      let firstDayWeekday = ref(firstDay.getDay())
+      if (firstDayWeekday.value !== 0) {
+        firstDayWeekday.value--
       } else {
-        firstDayWeekday = 6
+        firstDayWeekday.value = 6
       }
 
       // выщитываем, сколько дней из предыдущего месяца нунжо добавить в календарь
-      const daysFromPreviousMonth = new Date(this.year, prevMonth, 0).getDate()
-      const daysInFirstRow = daysFromPreviousMonth - firstDayWeekday
+      const daysFromPreviousMonth = new Date(year.value, prevMonth.value, 0).getDate()
+      const daysInFirstRow = daysFromPreviousMonth.value - firstDayWeekday.value
       for (let daysInPrevMonth = daysFromPreviousMonth; daysInPrevMonth > daysInFirstRow; daysInPrevMonth--) {
-        this.prevMonthDays.push(daysInPrevMonth)
+        prevMonthDays.value.push(daysInPrevMonth)
       }
-      this.prevMonthDays.reverse()
-    },
+      prevMonthDays.reverse()
+    }
 
-    genNextMonth () {
-      this.nextMonthDays = []
+    function genNextMonth () {
+      nextMonthDays.value = []
 
       // последний день недели месяца
-      const lastDayOfCurrentMonth = new Date(this.year, this.month, 0)
+      const lastDayOfCurrentMonth = new Date(year.value, month.value, 0)
       const lastDayWeekday = lastDayOfCurrentMonth.getDay()
       const daysInLastRow = 7 - lastDayWeekday
 
       // считаем денёчки всё
       if (daysInLastRow !== 7) {
         for (let dayFromNextMonth = 1; dayFromNextMonth <= daysInLastRow; dayFromNextMonth++) {
-          this.nextMonthDays.push(dayFromNextMonth)
+          nextMonthDays.value.push(dayFromNextMonth)
         }
       }
-    },
+    }
 
-    nextMonth () {
-      this.month++
-      if (this.month > 12) {
-        this.month = 1
-        this.year = Number(this.year) + 1
+    function nextMonth () {
+      month.value++
+      if (month.value > 12) {
+        month.value = 1
+        year.value = Number(year) + 1
       }
 
-      this.monthToString = this.monthName[this.month - 1]
-      this.days = new Date(this.year, this.month, 0).getDate()
-      this.genPreviousMonth()
-      this.genNextMonth()
-    },
+      monthToString.value = monthName[month.value - 1]
+      days.value = new Date(year.value, month.value, 0).getDate()
+      
+      genPreviousMonth()
+      genNextMonth()
+    }
 
-    previousMonth () {
-      this.month--
+    function previousMonth () {
+      month.value--
 
-      if (this.month < 1) {
-        this.month = 12
-        this.year = this.year - 1
+      if (month.value < 1) {
+        month.value = 12
+        year.value = year.value - 1
       }
 
-      this.monthToString = this.monthName[this.month - 1]
-      this.days = new Date(this.year, this.month, 0).getDate()
-      this.genPreviousMonth()
-      this.genNextMonth()
-    },
+      monthToString.value = monthName[month.value - 1]
+      days.value = new Date(year.value, month.value, 0).getDate()
 
-    nextYear () {
-      this.year = Number(this.year) + 1
-      this.days = new Date(this.year, this.month, 0).getDate()
-      this.genPreviousMonth()
-      this.genNextMonth()
-    },
+      genPreviousMonth()
+      genNextMonth()
+    }
 
-    previousYear () {
-      this.year = Number(this.year) - 1
-      this.days = new Date(this.year, this.month, 0).getDate()
-      this.genPreviousMonth()
-      this.genNextMonth()
-    },
+    function nextYear () {
+      year.value = Number(year.value) + 1
+      days.value = new Date(year.value, month.value, 0).getDate()
 
-    selectedValue (day) {
-      (day < 10 && !(day.toString()).startsWith('0')) ? this.day = '0' + day : this.day = day
+      genPreviousMonth()
+      genNextMonth()
+    }
 
-      if (this.month < 10 && this.month[0] !== '0') {
-        this.month = '0' + this.month
+    function previousYear () {
+      year.value = Number(year.value) - 1
+      days.value = new Date(year.value, month.value, 0).getDate()
+      
+      genPreviousMonth()
+      genNextMonth()
+    }
+
+    function selectedValue (value) {
+      (value < 10 && !(value.toString()).startsWith('0')) ? day.value = '0' + value: day.value = value
+
+      if (month.value < 10 && month.value[0] !== '0') {
+        month.value = '0' + month.value
       }
 
-      this.internalValue = `${this.day}.${this.month}.${this.year}`
-      this.$emit('selected', this.internalValue)
-    },
+      internalValue.value = `${day.value}.${month.value}.${year.value}`
+      this.$emit('selected', internalValue.value)
+    }
 
-    selectedValuePrevMonth (day) {
-      (day < 10 && !(day.toString()).startsWith('0')) ? this.day = '0' + day : this.day = day
+    function selectedValuePrevMonth (value) {
+      (value < 10 && !(value.toString()).startsWith('0')) ? day.value = '0' + value : day.value = value
 
-      if (this.month === 1) {
-        this.month = 12
-        this.monthNumber = 12
-        this.year = this.year - 1
+      if (month.value === 1) {
+        month.value = 12
+        monthNumber.value = 12
+        year.value = year.value - 1
       } else {
-        this.month--
-        (this.month < 10 && this.month[0] !== '0') ? this.monthNumber = '0' + this.month : this.monthNumber = this.month
+        month.value--
+        (month.value < 10 && month.value[0] !== '0') ? monthNumber.value = '0' + month.value : monthNumber.value = month.value
       }
-      this.days = new Date(this.year, this.month, 0).getDate()
-      this.monthToString = this.monthName[this.month - 1]
-      this.internalValue = `${this.day}.${this.monthNumber}.${this.year}`
-      this.genPreviousMonth()
-      this.genNextMonth()
-      this.genCalendar()
-      this.$emit('selected', this.internalValue)
-    },
 
-    selectedValueNextMonth (day) {
-      (day < 10 && !(day.toString()).startsWith('0')) ? this.day = '0' + day : this.day = day
+      days.value = new Date(year.value, month.value, 0).getDate()
+      monthToString.value = monthName[month.value - 1]
+      internalValue.value = `${day.value}.${monthNumber.value}.${year.value}`
 
-      if (this.month === 12) {
-        this.month = 1
-        this.monthNumber = '01'
-        this.year = Number(this.year) + 1
+      genPreviousMonth()
+      genNextMonth()
+      genCalendar()
+      this.$emit('selected', internalValue.value)
+    }
+
+    function selectedValueNextMonth (value) {
+      (value < 10 && !(value.toString()).startsWith('0')) ? day.value = '0' + value : day.value = value
+
+      if (month.value === 12) {
+        month.value = 1
+        monthNumber.value = '01'
+        year.value = Number(year.value) + 1
       } else {
-        this.month++
-        (this.month < 10 && this.month[0] !== '0') ? this.monthNumber = '0' + this.month : this.monthNumber = this.month
+        month.value++
+        (month.value < 10 && month.value[0] !== '0') ? monthNumber.value = '0' + month.value : monthNumber.value = month.value
       }
 
-      this.days = new Date(this.year, this.month, 0).getDate()
-      this.monthToString = this.monthName[this.month - 1]
-      this.internalValue = `${this.day}.${this.monthNumber}.${this.year}`
-      this.genPreviousMonth()
-      this.genNextMonth()
-      this.genCalendar()
-      this.$emit('selected', this.internalValue)
-    },
-  },
+      days.value = new Date(year.value, month.value, 0).getDate()
+      monthToString.value = monthName[month.value - 1]
+      internalValue.value = `${day.value}.${monthNumber.value}.${year.value}`
+      
+      genPreviousMonth()
+      genNextMonth()
+      genCalendar()
+      this.$emit('selected', internalValue.value)
+    }
+
+    return {
+      internalValue,
+      days,
+      prevMonthDays,
+      nextMonthDays,
+      day,
+      monthToString,
+      month,
+      monthNumber,
+      year,
+      weekDays,
+      monthName,
+      showError,
+      closeWindow,
+      chosenDay,
+      date,
+      nextMonth,
+      previousMonth,
+      nextYear,
+      previousYear,
+      selectedValue,
+      selectedValuePrevMonth,
+      selectedValueNextMonth
+    }
+  }
 }
 </script>
 
