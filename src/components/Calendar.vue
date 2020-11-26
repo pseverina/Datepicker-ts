@@ -44,7 +44,7 @@
     >
       <tr
         v-for="prevDay in prevMonthDays"
-        :key="prevDay.id"
+        :key="prevDay.key"
         class="date__day date__day--grey"
         @click="selectedValuePrevMonth(prevDay)"
       >
@@ -52,7 +52,7 @@
       </tr>
       <tr
         v-for="day in days"
-        :key="day.id"
+        :key="day.key"
         class="date__day date__day--regular"
         :class="{'date__day--selected' : Number(inputDay) === day}"
         tabindex="0"
@@ -64,7 +64,7 @@
       </tr>
       <tr
         v-for="nextDay in nextMonthDays"
-        :key="nextDay.id"
+        :key="nextDay.key"
         class="date__day date__day--grey"
         @click="selectedValueNextMonth(nextDay)"
       >
@@ -99,7 +99,7 @@ export default {
     },
   },
 
-  setup(props) {
+  setup(props, { emit }) {
     const internalValue = ref('')
     const days = ref([])
     const prevMonthDays = ref([])
@@ -132,10 +132,10 @@ export default {
     const date = ref('')
 
     watch(() => {
-      day.value = props.inputDay
-      month.value = props.inputMonth
-      year.value = props.inputYear
-      genCalendar()
+      // day.value = props.inputDay
+      // month.value = props.inputMonth
+      // year.value = props.inputYear
+      // genCalendar()
     })
 
     onMounted(() => {
@@ -143,10 +143,10 @@ export default {
     })
 
     function genCalendar () {
-      const days = ref([])
+      days.value = []
       date.value = new Date()
 
-      genMonth(date.value.getMonth())
+      genMonth(date.value.getMonth() + 1)
       genYear(date.value.getFullYear())
 
       const daysInMonth = new Date(year.value, month.value, 0).getDate()
@@ -174,7 +174,7 @@ export default {
     }
 
     function genPreviousMonth () {
-      const prevMonthDays = []
+      prevMonthDays.value = []
 
       // первый день недели месяца
       const prevMonth = month.value - 1
@@ -188,12 +188,14 @@ export default {
       }
 
       // выщитываем, сколько дней из предыдущего месяца нунжо добавить в календарь
-      const daysFromPreviousMonth = new Date(year.value, prevMonth.value, 0).getDate()
-      const daysInFirstRow = daysFromPreviousMonth.value - firstDayWeekday.value
+      const daysFromPreviousMonth = new Date(year.value, prevMonth, 0).getDate()
+      const daysInFirstRow = daysFromPreviousMonth - firstDayWeekday.value
+
       for (let daysInPrevMonth = daysFromPreviousMonth; daysInPrevMonth > daysInFirstRow; daysInPrevMonth--) {
         prevMonthDays.value.push(daysInPrevMonth)
       }
-      prevMonthDays.reverse()
+
+      prevMonthDays.value.reverse()
     }
 
     function genNextMonth () {
@@ -216,7 +218,7 @@ export default {
       month.value++
       if (month.value > 12) {
         month.value = 1
-        year.value = Number(year) + 1
+        year.value = Number(year.value) + 1
       }
 
       monthToString.value = monthName[month.value - 1]
@@ -227,7 +229,7 @@ export default {
     }
 
     function previousMonth () {
-      month.value--
+      month.value = month.value - 1
 
       if (month.value < 1) {
         month.value = 12
@@ -265,7 +267,7 @@ export default {
       }
 
       internalValue.value = `${day.value}.${month.value}.${year.value}`
-      this.$emit('selected', internalValue.value)
+      emit('selected', internalValue.value)
     }
 
     function selectedValuePrevMonth (value) {
@@ -286,8 +288,7 @@ export default {
 
       genPreviousMonth()
       genNextMonth()
-      genCalendar()
-      this.$emit('selected', internalValue.value)
+      emit('selected', internalValue.value)
     }
 
     function selectedValueNextMonth (value) {
@@ -308,8 +309,7 @@ export default {
       
       genPreviousMonth()
       genNextMonth()
-      genCalendar()
-      this.$emit('selected', internalValue.value)
+      emit('selected', internalValue.value)
     }
 
     return {
